@@ -84,7 +84,7 @@
 // GLibc/ARM and Android/ARM both use 'user_regs' for the structure type
 // containing core registers, while they use 'user_regs_struct' on other
 // architectures. This file-local typedef simplifies the source code.
-typedef user_regs user_regs_struct;
+typedef user_regs user_pt_regs;
 #elif defined (__mips__) || defined(__riscv)
 // This file-local typedef simplifies the source code.
 typedef gregset_t user_regs_struct;
@@ -250,7 +250,7 @@ typedef struct prstatus {       /* Information about thread; includes CPU reg*/
   elf_timeval    pr_stime;      /* System time                               */
   elf_timeval    pr_cutime;     /* Cumulative user time                      */
   elf_timeval    pr_cstime;     /* Cumulative system time                    */
-  user_regs_struct pr_reg;      /* CPU registers                             */
+  user_pt_regs   pr_reg;        /* CPU registers                             */
   uint32_t       pr_fpvalid;    /* True if math co-processor being used      */
 } prstatus;
 
@@ -310,7 +310,7 @@ struct CrashedProcess {
 #if defined(__mips__) || defined(__riscv)
     mcontext_t mcontext;
 #else
-    user_regs_struct regs;
+    user_pt_regs regs;
 #endif
 #if defined(__i386__) || defined(__x86_64__)
     user_fpregs_struct fpregs;
@@ -319,7 +319,7 @@ struct CrashedProcess {
     user_fpxregs_struct fpxregs;
 #endif
 #if defined(__aarch64__)
-    user_fpsimd_struct fpregs;
+    user_fpsimd_state fpregs;
 #endif
     uintptr_t stack_addr;
     const uint8_t* stack;
@@ -1015,7 +1015,7 @@ WriteThread(const Options& options, const CrashedProcess::Thread& thread,
 #elif defined(__riscv)
   memcpy(&pr.pr_reg, &thread.mcontext.__gregs, sizeof(user_regs_struct));
 #else
-  memcpy(&pr.pr_reg, &thread.regs, sizeof(user_regs_struct));
+  memcpy(&pr.pr_reg, &thread.regs, sizeof(user_pt_regs));
 #endif
 
   Nhdr nhdr;
